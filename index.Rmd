@@ -2,7 +2,7 @@
 title: "Fraud detection in Adform"
 author: 
 output: ioslides_presentation
-logo: adf.png
+logo: img/adf.png
 widescreen: true
 ---
 
