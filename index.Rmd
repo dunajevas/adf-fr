@@ -1,29 +1,50 @@
 ---
-title: "Fraud detection in Adform"
-author: 
+title: "How R fits in Adform's fraud detection system"
+author: Edgaras Dunajevas 
 output: ioslides_presentation
 logo: img/adf.png
 widescreen: true
 ---
 
-## R Markdown
+## About Lithuania
 
-This is an R Markdown presentation. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+- Not so cold and windy as Denmark is right now
+- Pretty good at basketball, FIBA ranking number #4
+- Opposed to happiest people in the world - Danes, we Lithuanians are proud to have the highest number of suicides per capita in the World, averaging 31/100.000 per year
+- Scoring #2 after Norway for hottest women https://docs.google.com/file/d/0BwGMR0W9Raj9dDk2SjN1eVpJN3c/edit
+- Vilnius-R user group, established 2.5 years ago, couple of meet-ups were organized, data-dives/hackathons, also did some stuff together in Kaggle competitions
+- by R-activity score we are #40, at least better Latvia, http://rapporter.net/custom/R-activity/#score/3, although this score is not up to date
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+## About me
 
+- Regular Data Scientist @ Adform
+- Wanted to play electric guitar in a band, but life forced me into Statistics and Programming
+- Bachelors degree Financial and Actuarial Mathematics, Masters in Econometrics, Data Science on the side projects
+- I also play tuba, banjo, drums and can do "Old MacDonald Had a Farm" and intro to "Don't Stop Believin'" on keyboard
+- Experience with R ~ 5 years
+- Alongside R I use Hive, Scalding and Python
 
-## Slide with R Code and Output
+## Exploratory Analysis on Fraud Detection project
 
-```{r}
-summary(cars)
-```
+- Third-party provider data with labels
+- Looking at click bot source files @ github
+- Checking geo-location data
+- Proxies, ISPs
+- TOR networks
+- Pay-per-click labor exchanges on the web
 
-## Slide with Plot
+## Some examples of exploratory analysis
 
-```{r, echo=FALSE}
-plot(cars)
-```
+ecdf of time before click for each cookie
+
+![alt text](img/time.png)
+   
+## Some examples of exploratory analysis (2)
+
+Time difference average and standard deviation between impressions
+
+![alt text](img/imp.png)
+
 
 ## Click farmers
 
@@ -54,6 +75,40 @@ Full Bayesian inference via `rstan`: beta components + uniform component
     - implemented in `C` but still quite slow, unpredictable computing time when data has outliers and weird cases
     - having more than one component usually leads to degenerate solution, identifiable parametrization is not too elegant and is constrained by package data types
 
+## Stan example: define model
+
+```{r}
+mix_model <- 
+'
+data {
+  [input definitions - variable types, ranges]
+}
+parameters {
+  [parameters to estimate]
+}
+model {
+  [model likelihood functions, parameter priors]
+}
+generated quantities{
+  [additional stuff you would like to monitor (out-of-sample errors, etc)]
+}
+'
+```
+
+## Stan example: fit using R interface
+```{r, eval=FALSE}
+fit1 <- stan(model_code=mix_model,
+            iter = 2000, 
+            chains = 4,
+            data = list(x=x, y=y, ...))
+            
+getStanSummary <- function(fit){
+  summary(fit)$summary
+}
+
+getStanSummary(fit1)['log_lik_test', 'mean']
+
+```
 ## Models - 2
 
 EM algorithm (modified script of `mixtools`): truncated normal components + uniform component
@@ -68,7 +123,7 @@ EM algorithm (modified script of `mixtools`): truncated normal components + unif
 
 ## Model selection
 
-- We fit 1 Bayesian model, 5 EM algorithm based models (up to 5 normal components) with two different inializations each (11 models in total).
+- We fit 1 Bayesian model, 5 EM algorithm based models (up to 5 normal components) with two different initializations each (11 models in total).
 - Model selection is based on out of sample log-likelihood
 - Trivia: why we filter out models with negative out of sample log-likelihood?
 
@@ -82,3 +137,20 @@ EM algorithm (modified script of `mixtools`): truncated normal components + unif
 2. Add other metrics such as out/on-frame, corner, spike click counts
 3. Aggregate these probabilities and metrics by ip, publisher domain, cookie and etc.
 4. Combine this with metrics from other jobs to get final fraud score
+
+## Production
+
+- most of data preprocessing is done with `hive`
+- daily/weekly jobs on AWS
+  - 200GB transactions joined with 2TB RTB requests (to get attributes which are not present in transactions)
+  - filter 30GB of unloads daily => deduplicate, filter and aggregate to weekly data
+  - banner per week should have at least 1000 clicks this yields around 100 banners that get scored.
+- model fitting, parallelized per banner done in `R`
+- output is used by other jobs in the production which classify IPs and domains as fraudulent or legitimate
+
+## Pipeline Architecture
+
+![alt text](img/pipeline.png)
+
+# Thank You!
+
