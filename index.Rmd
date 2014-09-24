@@ -33,6 +33,7 @@ widescreen: true
 - TOR networks
 - Pay-per-click labor exchanges on the web
 
+<!---
 ## Some examples of exploratory analysis
 
 ecdf of time before click for each cookie
@@ -44,7 +45,7 @@ ecdf of time before click for each cookie
 Time difference average and standard deviation between impressions
 
 ![alt text](img/imp.png)
-
+-->
 
 ## Click farmers
 
@@ -148,9 +149,13 @@ EM algorithm (modified script of `mixtools`): truncated normal components + unif
 - model fitting, parallelized per banner done in `R`
 - output is used by other jobs in the production which classify IPs and domains as fraudulent or legitimate
 
+<!---
+
 ## Pipeline Architecture
 
 ![alt text](img/pipeline.png)
+
+-->
 
 # Thank You!
 
